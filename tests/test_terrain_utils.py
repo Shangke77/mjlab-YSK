@@ -70,6 +70,39 @@ def test_partial_misses():
     torch.testing.assert_close(normal[b], expected, atol=1e-4, rtol=1e-4)
 
 
+def test_nonfinite_points_are_excluded():
+  """Non-finite ray hits must not contaminate the covariance."""
+  points = torch.tensor(
+    [
+      [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [float("nan"), 0.0, 0.0],
+        [0.0, float("inf"), 0.0],
+      ]
+    ]
+  )
+  valid_mask = torch.ones(1, 6, dtype=torch.bool)
+
+  normal = fit_terrain_normal(points, valid_mask)
+
+  expected = torch.tensor([[0.0, 0.0, 1.0]])
+  torch.testing.assert_close(normal, expected, atol=1e-5, rtol=1e-5)
+
+
+def test_nonfinite_invalid_points_fall_back():
+  """An entirely invalid non-finite cloud falls back without decomposition errors."""
+  points = torch.full((2, 8, 3), float("nan"))
+  valid_mask = torch.zeros(2, 8, dtype=torch.bool)
+
+  normal = fit_terrain_normal(points, valid_mask)
+
+  expected = torch.tensor([0.0, 0.0, 1.0]).expand(2, 3)
+  torch.testing.assert_close(normal, expected, atol=1e-6, rtol=1e-6)
+
+
 def test_fewer_than_3_valid_fallback():
   """Fewer than 3 valid points (including zero) falls back to [0, 0, 1]."""
   B, N = 3, 10

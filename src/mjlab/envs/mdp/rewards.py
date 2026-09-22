@@ -65,6 +65,11 @@ def action_rate_l2(env: ManagerBasedRlEnv) -> torch.Tensor:
   )
 
 
+def action_l2(env: ManagerBasedRlEnv) -> torch.Tensor:
+  """Penalize raw policy action magnitude using an L2 squared kernel."""
+  return torch.sum(torch.square(env.action_manager.action), dim=1)
+
+
 def action_acc_l2(env: ManagerBasedRlEnv) -> torch.Tensor:
   """Penalize the acceleration of the actions using L2 squared kernel.
 

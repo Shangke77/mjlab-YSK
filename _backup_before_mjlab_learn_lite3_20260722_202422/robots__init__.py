@@ -1,3 +1,9 @@
+from mjlab.asset_zoo.robots.deeprobotics_lite3.lite3_constants import (
+  LITE3_ACTION_SCALE as LITE3_ACTION_SCALE,
+)
+from mjlab.asset_zoo.robots.deeprobotics_lite3.lite3_constants import (
+  get_lite3_robot_cfg as get_lite3_robot_cfg,
+)
 from mjlab.asset_zoo.robots.i2rt_yam.yam_constants import (
   YAM_ACTION_SCALE as YAM_ACTION_SCALE,
 )
@@ -15,10 +21,4 @@ from mjlab.asset_zoo.robots.unitree_go1.go1_constants import (
 )
 from mjlab.asset_zoo.robots.unitree_go1.go1_constants import (
   get_go1_robot_cfg as get_go1_robot_cfg,
-)
-from mjlab.asset_zoo.robots.deep_lite3.lite3_constants import (
-  LITE3_ACTION_SCALE as LITE3_ACTION_SCALE,
-)
-from mjlab.asset_zoo.robots.deep_lite3.lite3_constants import (
-  get_lite3_robot_cfg as get_lite3_robot_cfg,
 )

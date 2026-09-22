@@ -24,22 +24,50 @@ def fit_terrain_normal(
 
   Returns:
     [B, 3] unit normal oriented upward. Falls back to [0, 0, 1]
-    when fewer than 3 valid points.
+    when fewer than 3 finite valid points or when the fit is degenerate.
   """
   B = points.shape[0]
   device = points.device
 
+  # Invalid ray hits may contain NaN or Inf coordinates. Multiplying those
+  # coordinates by a zero mask would still produce NaN, so exclude them and
+  # replace them explicitly before accumulating the covariance.
+  valid_mask = valid_mask & torch.isfinite(points).all(dim=-1)
   count = valid_mask.sum(dim=1)
   enough = count >= 3
 
-  mask_f = valid_mask.float().unsqueeze(-1)
-  masked_points = points * mask_f
+  mask = valid_mask.unsqueeze(-1)
+  masked_points = torch.where(mask, points, torch.zeros_like(points))
   count_clamped = count.clamp(min=1).float().unsqueeze(-1)
   centroid = masked_points.sum(dim=1) / count_clamped
-  centered = (points - centroid.unsqueeze(1)) * mask_f
+  centered = torch.where(
+    mask,
+    points - centroid.unsqueeze(1),
+    torch.zeros_like(points),
+  )
 
   cov = torch.einsum("bni,bnj->bij", centered, centered)
-  eigenvalues, eigenvectors = torch.linalg.eigh(cov)
+  cov = 0.5 * (cov + cov.transpose(-1, -2))
+
+  # Normalize each covariance to keep the eigensolver in a stable numeric
+  # range. Unusable batches get a finite matrix with distinct eigenvalues so
+  # one bad ray cloud cannot make the batched GPU eigendecomposition fail.
+  scale = cov.diagonal(dim1=-2, dim2=-1).sum(dim=-1)
+  usable = enough & torch.isfinite(cov).all(dim=(-2, -1)) & (scale > 0)
+  tiny = torch.finfo(cov.dtype).tiny
+  normalized_cov = cov / scale.clamp(min=tiny).view(B, 1, 1)
+  fallback_cov = torch.diag(
+    torch.tensor([1.0, 2.0, 3.0], device=device, dtype=cov.dtype)
+  ).expand(B, -1, -1)
+  normalized_cov = torch.where(usable.view(B, 1, 1), normalized_cov, fallback_cov)
+
+  # A tiny unequal diagonal perturbation separates repeated eigenvalues in
+  # line-like and point-like clouds. It is negligible for a valid plane and
+  # those degenerate fits are rejected below.
+  regularizer = torch.diag(
+    torch.tensor([1.0e-6, 2.0e-6, 3.0e-6], device=device, dtype=cov.dtype)
+  )
+  eigenvalues, eigenvectors = torch.linalg.eigh(normalized_cov + regularizer)
   normal = eigenvectors[:, :, 0]  # Smallest eigenvalue = plane normal.
   normal = normal / normal.norm(dim=-1, keepdim=True).clamp(min=1e-8)
 
@@ -52,7 +80,7 @@ def fit_terrain_normal(
   eps = torch.finfo(eigenvalues.dtype).eps
   plane_like = (eigenvalues[:, 0] / eigenvalues[:, 1].clamp(min=eps)) < 0.1
   has_spread = eigenvalues[:, 1] > eigenvalues[:, 2].clamp(min=eps) * 1e-6
-  reliable = enough & plane_like & has_spread
+  reliable = usable & plane_like & has_spread
 
   up = torch.tensor([0.0, 0.0, 1.0], device=device).expand(B, 3)
   return torch.where(reliable.unsqueeze(-1), normal, up)
