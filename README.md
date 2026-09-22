@@ -1,7 +1,7 @@
 
+<video src="https://github.com/Shangke77/mjlab-YSK/raw/refs/heads/main/assets/video1.mp4" controls width="100%"></video>
 
-
-
+<video src="https://github.com/Shangke77/mjlab-YSK/raw/refs/heads/main/assets/video2.mp4" controls width="100%"></video>
 https://github.com/user-attachments/assets/e02189f6-8061-4595-8f2b-590a242fea8c
 
 ![Project banner](https://raw.githubusercontent.com/mujocolab/mjlab/main/docs/source/_static/mjlab-banner.jpg)
