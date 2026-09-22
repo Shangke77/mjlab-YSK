@@ -15,9 +15,25 @@ Added
 Changed
 ^^^^^^^
 
+- Aligned the Lite3 actuator gains, effort limits, initial pose, action scales,
+  policy observations, phase-conditioned foot trajectory and clock, and PPO
+  settings with the official Deep Robotics training configuration.
+- Retuned the Lite3 flat-terrain velocity configuration for sim2sim robustness
+  by lowering joint-position action scales, enabling PPO action clipping, adding
+  action-magnitude regularization, and strengthening reset, friction, inertial,
+  encoder-bias, COM, and push randomization.
+- Added a Lite3 native MuJoCo checkpoint gate script for ranking checkpoints by
+  closed-loop deployment-simulation behavior instead of training reward alone.
+
 Fixed
 ^^^^^
 
+- Fixed the Lite3 foot-collision regex so rear feet receive the same contact
+  dimensionality, priority, and friction settings as front feet during training.
+- Fixed terrain-normal fitting failing in batched GPU eigendecomposition when
+  rough-terrain raycasts contain non-finite or degenerate hit-point clouds.
+- Fixed the Viser velocity-command controls failing to open when a command axis
+  has a zero range, as in the Lite3 flat-terrain play configuration.
 - Fixed ``mdp.bad_orientation`` returning NaN when float32 rounding in
   ``quat_apply_inverse`` pushed the projected-gravity z-component slightly
   outside ``[-1, 1]``, making ``torch.acos`` return NaN and silently

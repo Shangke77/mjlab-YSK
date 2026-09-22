@@ -530,10 +530,27 @@ caps the collision convex hull’s vertex count to lower narrowphase cost.</p></
 </section>
 <section id="changed">
 <h3>Changed<a class="headerlink" href="#changed" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Aligned the Lite3 actuator gains, effort limits, initial pose, action scales,
+policy observations, phase-conditioned foot trajectory and clock, and PPO
+settings with the official Deep Robotics training configuration.</p></li>
+<li><p>Retuned the Lite3 flat-terrain velocity configuration for sim2sim robustness
+by lowering joint-position action scales, enabling PPO action clipping, adding
+action-magnitude regularization, and strengthening reset, friction, inertial,
+encoder-bias, COM, and push randomization.</p></li>
+<li><p>Added a Lite3 native MuJoCo checkpoint gate script for ranking checkpoints by
+closed-loop deployment-simulation behavior instead of training reward alone.</p></li>
+</ul>
 </section>
 <section id="fixed">
 <h3>Fixed<a class="headerlink" href="#fixed" title="Link to this heading">#</a></h3>
 <ul class="simple">
+<li><p>Fixed the Lite3 foot-collision regex so rear feet receive the same contact
+dimensionality, priority, and friction settings as front feet during training.</p></li>
+<li><p>Fixed terrain-normal fitting failing in batched GPU eigendecomposition when
+rough-terrain raycasts contain non-finite or degenerate hit-point clouds.</p></li>
+<li><p>Fixed the Viser velocity-command controls failing to open when a command axis
+has a zero range, as in the Lite3 flat-terrain play configuration.</p></li>
 <li><p>Fixed <code class="docutils literal notranslate"><span class="pre">mdp.bad_orientation</span></code> returning NaN when float32 rounding in
 <code class="docutils literal notranslate"><span class="pre">quat_apply_inverse</span></code> pushed the projected-gravity z-component slightly
 outside <code class="docutils literal notranslate"><span class="pre">[-1,</span> <span class="pre">1]</span></code>, making <code class="docutils literal notranslate"><span class="pre">torch.acos</span></code> return NaN and silently
